@@ -410,6 +410,11 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
           </button>
         ))}
       </div>
+      <div style={{marginTop:"auto", padding:"10px 16px", borderTop:"1px solid var(--border)"}}>
+        <button className="nav-item" onClick={() => { if(window.confirm("Sign Out?")) supabase.auth.signOut(); }} style={{color:"var(--red)", width:"100%", justifyContent:"flex-start"}}>
+          <span className="ni">🚪</span><span>Sign Out</span>
+        </button>
+      </div>
       <div className="aside-footer">
         <div className="aside-acct">ECB Account</div>
         <div className="aside-acct-val">{settings.accountNumber||"—"}</div>
