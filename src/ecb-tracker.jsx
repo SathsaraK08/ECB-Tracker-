@@ -275,7 +275,15 @@ export default function App() {
   const [viewMode, setViewMode] = useState("daily"); // daily | weekly | monthly
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
 
   const [session, setSession] = useState(null);
 
@@ -374,7 +382,7 @@ export default function App() {
         <div className={`overlay-bg ${isMenuOpen ? "open" : ""}`} onClick={() => setIsMenuOpen(false)} />
         <Sidebar page={page} setPage={setPage} settings={data.settings} viewMode={viewMode} setViewMode={setViewMode} showViewToggle={["dashboard","records"].includes(page)} isMenuOpen={isMenuOpen} closeMenu={() => setIsMenuOpen(false)} />
         <main className="main">
-          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
           {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
@@ -458,8 +466,27 @@ function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu }) {
   });
   const maxU = Math.max(...last7.map(d=>d.units),0.1);
 
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
+  };
+
   return (
     <div>
+      {deferredPrompt && (
+        <div className="card" style={{marginBottom:20, background:"var(--purple)", display:"flex", alignItems:"center", justifyContent:"space-between", border:"none"}}>
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <span style={{fontSize:24}}>📱</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600, color:"white"}}>Install ECB Tracker</div>
+              <div style={{fontSize:12, color:"rgba(255,255,255,0.7)"}}>Add to your home screen for quick access</div>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={handleInstall} style={{background:"white", color:"var(--purple)", border:"none", marginLeft:10}}>Install</button>
+        </div>
+      )}
       <div className="ph">
         <div className="ph-left">
           <button className="hamburger" onClick={toggleMenu}>☰</button>
@@ -1431,18 +1458,16 @@ function LoginScreen({ showToast }) {
   const [mobile, setMobile] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const isLogin = view === "login";
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) { showToast("Enter email and password", "warn"); return; }
-    if (!isLogin && (!username || !mobile || !accountNumber || !confirmPassword)) {
+    if ((view !== "login") && (!username || !mobile || !accountNumber || !confirmPassword)) {
       showToast("Please fill in all profile fields", "warn");
       return;
     }
-    if (!isLogin && password !== confirmPassword) {
+    if ((view !== "login") && password !== confirmPassword) {
       showToast("Passwords do not match", "warn");
       return;
     }
@@ -1530,7 +1555,7 @@ function LoginScreen({ showToast }) {
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>Mobile Number</label>
-                <input type="tel" value={mobile} onChange={e=>setMobile(e.target.value)} placeholder="e.g. +94770000000" required={!isLogin} />
+                <input type="tel" value={mobile} onChange={e=>setMobile(e.target.value)} placeholder="e.g. +94770000000" required={view !== "login"} />
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>CEB Account Number</label>
@@ -1572,6 +1597,11 @@ function LoginScreen({ showToast }) {
       color:"var(--text)",fontFamily:"var(--font)",
       fontSize:13,padding:"9px 12px",outline:"none"}}
   />
+  {view === "login" && (
+    <div style={{textAlign: "right", marginTop: 4}}>
+      <span style={{fontSize: 12, color: "var(--cyan)", cursor: "pointer"}} onClick={() => setView("forgot")}>Forgot Password?</span>
+    </div>
+  )}
 </div>
           {view === "signup" && (
             <div className="fg" style={{marginBottom: 24}}>
