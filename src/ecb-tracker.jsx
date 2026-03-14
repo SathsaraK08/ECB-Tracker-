@@ -1296,23 +1296,75 @@ function LoginScreen({ showToast }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // New Signup Fields
+  const [username, setUsername] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) { showToast("Enter email and password", "warn"); return; }
+    if (!isLogin && (!username || !mobile || !accountNumber)) {
+      showToast("Please fill in all profile fields", "warn");
+      return;
+    }
+    
     setLoading(true);
     let error = null;
+    
     if (isLogin) {
       const res = await supabase.auth.signInWithPassword({ email, password });
       error = res.error;
     } else {
-      const res = await supabase.auth.signUp({ email, password });
+      const res = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: undefined,
+          data: {
+            username: username,
+            mobile: mobile,
+            account_number: accountNumber
+          }
+        }
+      });
       error = res.error;
-      if (!error) showToast("Sign up successful! You can now log in.", "ok");
+      
+      if (!error && res.data.user) {
+        // Create user profile in the public.profiles table
+        const { error: profileError } = await supabase.from('profiles').insert([
+          {
+            id: res.data.user.id,
+            email: email,
+            username: username,
+            mobile: mobile,
+            account_number: accountNumber
+          }
+        ]);
+        if (profileError) {
+          error = profileError;
+        } else {
+          // Immediately log in since email confirmation is disabled
+          const loginRes = await supabase.auth.signInWithPassword({ email, password });
+          if (loginRes.error) {
+            error = loginRes.error;
+          } else {
+            showToast("Sign up successful! Logging in...", "ok");
+          }
+        }
+      }
     }
     setLoading(false);
-    if (error) showToast(error.message, "warn");
+    if (error) {
+      if (error.status === 429) {
+        showToast("Too many attempts. Please wait 5 minutes and try again.", "warn");
+      } else {
+        showToast(error.message, "warn");
+      }
+    }
   };
 
   return (
@@ -1324,8 +1376,25 @@ function LoginScreen({ showToast }) {
           <div className="brand-sub">Secure Login</div>
         </div>
         <form onSubmit={handleSubmit}>
+          {!isLogin && (
+            <>
+              <div className="fg" style={{marginBottom: 16}}>
+                <label>Username</label>
+                <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. Sathsara" required={!isLogin} />
+              </div>
+              <div className="fg" style={{marginBottom: 16}}>
+                <label>Mobile Number</label>
+                <input type="tel" value={mobile} onChange={e=>setMobile(e.target.value)} placeholder="e.g. +94770000000" required={!isLogin} />
+              </div>
+              <div className="fg" style={{marginBottom: 16}}>
+                <label>CEB Account Number</label>
+                <input type="text" className="mono" value={accountNumber} onChange={e=>setAccountNumber(e.target.value)} placeholder="e.g. 1234567890" required={!isLogin} />
+              </div>
+            </>
+          )}
+
           <div className="fg" style={{marginBottom: 16}}>
-            <label>Email</label>
+            <label>Email Address</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" required />
           </div>
           <div className="fg" style={{marginBottom: 24}}>
