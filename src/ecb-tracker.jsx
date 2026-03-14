@@ -1431,6 +1431,7 @@ function LoginScreen({ showToast }) {
   const [mobile, setMobile] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const isLogin = view === "login";
 
   const [loading, setLoading] = useState(false);
 
@@ -1538,17 +1539,40 @@ function LoginScreen({ showToast }) {
             </>
           )}
 
-          {view !== "forgot" && (
-            <div className="fg" style={{marginBottom: view === "login" ? 24 : 16}}>
-              <label>Password</label>
-              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required />
-              {view === "login" && (
-                <div style={{textAlign: "right", marginTop: 4}}>
-                  <span style={{fontSize: 12, color: "var(--cyan)", cursor: "pointer"}} onClick={() => setView("forgot")}>Forgot Password?</span>
-                </div>
-              )}
-            </div>
-          )}
+<div style={{marginBottom:16}}>
+  <label style={{fontSize:11,fontWeight:600,color:"var(--sub)",
+    letterSpacing:".06em",textTransform:"uppercase",
+    display:"block",marginBottom:5}}>
+    EMAIL ADDRESS
+  </label>
+  <input
+    type="email"
+    placeholder="your@email.com"
+    value={email}
+    onChange={e => setEmail(e.target.value)}
+    style={{width:"100%",background:"var(--s2)",
+      border:"1px solid var(--border)",borderRadius:8,
+      color:"var(--text)",fontFamily:"var(--font)",
+      fontSize:13,padding:"9px 12px",outline:"none"}}
+  />
+</div>
+<div style={{marginBottom:8}}>
+  <label style={{fontSize:11,fontWeight:600,color:"var(--sub)",
+    letterSpacing:".06em",textTransform:"uppercase",
+    display:"block",marginBottom:5}}>
+    PASSWORD
+  </label>
+  <input
+    type="password"
+    placeholder="••••••••"
+    value={password}
+    onChange={e => setPassword(e.target.value)}
+    style={{width:"100%",background:"var(--s2)",
+      border:"1px solid var(--border)",borderRadius:8,
+      color:"var(--text)",fontFamily:"var(--font)",
+      fontSize:13,padding:"9px 12px",outline:"none"}}
+  />
+</div>
           {view === "signup" && (
             <div className="fg" style={{marginBottom: 24}}>
               <label>Confirm Password</label>
