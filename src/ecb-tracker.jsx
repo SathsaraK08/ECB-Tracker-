@@ -276,7 +276,15 @@ export default function App() {
   const [viewMode, setViewMode] = useState("daily"); // daily | weekly | monthly
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
 
   const [session, setSession] = useState(null);
 
@@ -375,7 +383,7 @@ export default function App() {
         <div className={`overlay-bg ${isMenuOpen ? "open" : ""}`} onClick={() => setIsMenuOpen(false)} />
         <Sidebar page={page} setPage={setPage} settings={data.settings} viewMode={viewMode} setViewMode={setViewMode} showViewToggle={["dashboard","records"].includes(page)} isMenuOpen={isMenuOpen} closeMenu={() => setIsMenuOpen(false)} />
         <main className="main">
-          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
           {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
@@ -432,7 +440,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
 /* ═══════════════════════════════════════════════════════════════
    PAGE: DASHBOARD
 ═══════════════════════════════════════════════════════════════ */
-function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu }) {
+function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu, deferredPrompt, setDeferredPrompt }) {
   const computed = withUsed(data.entries);
   const today = todayStr();
 
@@ -459,8 +467,27 @@ function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu }) {
   });
   const maxU = Math.max(...last7.map(d=>d.units),0.1);
 
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
+  };
+
   return (
     <div>
+      {deferredPrompt && (
+        <div className="card" style={{marginBottom:20, background:"var(--purple)", display:"flex", alignItems:"center", justifyContent:"space-between", border:"none"}}>
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <span style={{fontSize:24}}>📱</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600, color:"white"}}>Install ECB Tracker</div>
+              <div style={{fontSize:12, color:"rgba(255,255,255,0.7)"}}>Add to your home screen for quick access</div>
+            </div>
+          </div>
+          <button className="btn btn-primary" onClick={handleInstall} style={{background:"white", color:"var(--purple)", border:"none", marginLeft:10}}>Install</button>
+        </div>
+      )}
       <div className="ph">
         <div className="ph-left">
           <button className="hamburger" onClick={toggleMenu}>☰</button>
@@ -1497,11 +1524,11 @@ function LoginScreen({ showToast }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) { showToast("Enter email and password", "warn"); return; }
-    if (!isLogin && (!username || !mobile || !accountNumber || !confirmPassword)) {
+    if (view === "signup" && (!username || !mobile || !accountNumber || !confirmPassword)) {
       showToast("Please fill in all profile fields", "warn");
       return;
     }
-    if (!isLogin && password !== confirmPassword) {
+    if (view === "signup" && password !== confirmPassword) {
       showToast("Passwords do not match", "warn");
       return;
     }
@@ -1589,7 +1616,7 @@ function LoginScreen({ showToast }) {
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>Mobile Number</label>
-                <input type="tel" value={mobile} onChange={e=>setMobile(e.target.value)} placeholder="e.g. +94770000000" required={!isLogin} />
+                <input type="tel" value={mobile} onChange={e=>setMobile(e.target.value)} placeholder="e.g. +94770000000" required={view === "signup"} />
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>CEB Account Number</label>
@@ -1597,6 +1624,12 @@ function LoginScreen({ showToast }) {
               </div>
             </>
           )}
+
+          {/* Email field - always needed for all views */}
+          <div className="fg" style={{marginBottom: 16}}>
+            <label>Email Address</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" required />
+          </div>
 
           {view !== "forgot" && (
             <div className="fg" style={{marginBottom: view === "login" ? 24 : 16}}>
@@ -1609,12 +1642,14 @@ function LoginScreen({ showToast }) {
               )}
             </div>
           )}
+
           {view === "signup" && (
             <div className="fg" style={{marginBottom: 24}}>
               <label>Confirm Password</label>
               <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="••••••••" required={view === "signup"} />
             </div>
           )}
+
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? "Please wait..." : (view === "login" ? "Log In" : (view === "signup" ? "Create Account" : "Send Reset Link"))}
           </button>
