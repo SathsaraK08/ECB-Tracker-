@@ -347,11 +347,12 @@ export default function App() {
   };
 
   if(!session) {
+    const isReset = window.location.hash.includes("type=recovery") || window.location.hash.includes("access_token=");
     return (
       <>
         <style>{CSS}</style>
         {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-        <LoginScreen showToast={showToast} />
+        {isReset ? <ResetPasswordScreen showToast={showToast} /> : <LoginScreen showToast={showToast} />}
       </>
     );
   }
@@ -1325,7 +1326,7 @@ function EmptyState({ msg }) {
    LOGIN SCREEN
 ═══════════════════════════════════════════════════════════════ */
 function LoginScreen({ showToast }) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState("login"); // login | signup | forgot
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
@@ -1352,10 +1353,10 @@ function LoginScreen({ showToast }) {
     setLoading(true);
     let error = null;
     
-    if (isLogin) {
+    if (view === "login") {
       const res = await supabase.auth.signInWithPassword({ email, password });
       error = res.error;
-    } else {
+    } else if (view === "signup") {
       const res = await supabase.auth.signUp({
         email,
         password,
@@ -1404,6 +1405,18 @@ function LoginScreen({ showToast }) {
     }
   };
 
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (!email) { showToast("Enter your email address", "warn"); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    });
+    setLoading(false);
+    if (error) showToast(error.message, "warn");
+    else showToast("Password reset email sent! Check your inbox.", "ok");
+  };
+
   return (
     <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding: 20}}>
       <div className="card" style={{width: 360, maxWidth: "100%"}}>
@@ -1411,12 +1424,12 @@ function LoginScreen({ showToast }) {
           <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px", maxHeight:"60px", objectFit:"contain"}} />
           <div className="brand-sub" style={{marginTop:"8px"}}>Secure Login</div>
         </div>
-        <form onSubmit={handleSubmit}>
-          {!isLogin && (
+        <form onSubmit={view === "forgot" ? handleReset : handleSubmit}>
+          {view === "signup" && (
             <>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>Username</label>
-                <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. Sathsara" required={!isLogin} />
+                <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. Sathsara" required={view === "signup"} />
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>Mobile Number</label>
@@ -1424,35 +1437,85 @@ function LoginScreen({ showToast }) {
               </div>
               <div className="fg" style={{marginBottom: 16}}>
                 <label>CEB Account Number</label>
-                <input type="text" className="mono" value={accountNumber} onChange={e=>setAccountNumber(e.target.value)} placeholder="e.g. 1234567890" required={!isLogin} />
+                <input type="text" className="mono" value={accountNumber} onChange={e=>setAccountNumber(e.target.value)} placeholder="e.g. 1234567890" required={view === "signup"} />
               </div>
             </>
           )}
 
-          <div className="fg" style={{marginBottom: 16}}>
-            <label>Email Address</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" required />
-          </div>
-          <div className="fg" style={{marginBottom: isLogin ? 24 : 16}}>
-            <label>Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required />
-          </div>
-          {!isLogin && (
+          {view !== "forgot" && (
+            <div className="fg" style={{marginBottom: view === "login" ? 24 : 16}}>
+              <label>Password</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required />
+              {view === "login" && (
+                <div style={{textAlign: "right", marginTop: 4}}>
+                  <span style={{fontSize: 12, color: "var(--cyan)", cursor: "pointer"}} onClick={() => setView("forgot")}>Forgot Password?</span>
+                </div>
+              )}
+            </div>
+          )}
+          {view === "signup" && (
             <div className="fg" style={{marginBottom: 24}}>
               <label>Confirm Password</label>
-              <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="••••••••" required={!isLogin} />
+              <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="••••••••" required={view === "signup"} />
             </div>
           )}
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? "Please wait..." : (isLogin ? "Log In" : "Create Account")}
+            {loading ? "Please wait..." : (view === "login" ? "Log In" : (view === "signup" ? "Create Account" : "Send Reset Link"))}
           </button>
         </form>
         <div style={{textAlign: "center", marginTop: 20, fontSize: 12, color: "var(--muted)"}}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span style={{color: "var(--cyan)", cursor: "pointer", fontWeight: 600}} onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? "Sign Up" : "Log In"}
+          {view === "login" ? "Don't have an account? " : (view === "signup" ? "Already have an account? " : "Go back to ")}
+          <span style={{color: "var(--cyan)", cursor: "pointer", fontWeight: 600}} onClick={() => setView(view === "signup" ? "login" : (view === "forgot" ? "login" : "signup"))}>
+            {view === "login" ? "Sign Up" : "Log In"}
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET PASSWORD SCREEN
+═══════════════════════════════════════════════════════════════ */
+function ResetPasswordScreen({ showToast }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) { showToast("Passwords do not match", "warn"); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) showToast(error.message, "warn");
+    else {
+      showToast("Password updated successfully!", "ok");
+      window.location.hash = "";
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding: 20}}>
+      <div className="card" style={{width: 360, maxWidth: "100%"}}>
+        <div className="brand" style={{borderBottom:"none", padding:"0 0 20px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center"}}>
+          <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px", maxHeight:"60px", objectFit:"contain"}} />
+          <div className="brand-sub" style={{marginTop:"8px"}}>Set New Password</div>
+        </div>
+        <form onSubmit={handleReset}>
+          <div className="fg" style={{marginBottom: 16}}>
+            <label>New Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required />
+          </div>
+          <div className="fg" style={{marginBottom: 24}}>
+            <label>Confirm New Password</label>
+            <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="••••••••" required />
+          </div>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
       </div>
     </div>
   );
