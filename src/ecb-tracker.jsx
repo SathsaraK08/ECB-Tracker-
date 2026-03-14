@@ -1328,14 +1328,19 @@ function LoginScreen({ showToast }) {
   const [username, setUsername] = useState("");
   const [mobile, setMobile] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) { showToast("Enter email and password", "warn"); return; }
-    if (!isLogin && (!username || !mobile || !accountNumber)) {
+    if (!isLogin && (!username || !mobile || !accountNumber || !confirmPassword)) {
       showToast("Please fill in all profile fields", "warn");
+      return;
+    }
+    if (!isLogin && password !== confirmPassword) {
+      showToast("Passwords do not match", "warn");
       return;
     }
     
@@ -1423,10 +1428,16 @@ function LoginScreen({ showToast }) {
             <label>Email Address</label>
             <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" required />
           </div>
-          <div className="fg" style={{marginBottom: 24}}>
+          <div className="fg" style={{marginBottom: isLogin ? 24 : 16}}>
             <label>Password</label>
             <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" required />
           </div>
+          {!isLogin && (
+            <div className="fg" style={{marginBottom: 24}}>
+              <label>Confirm Password</label>
+              <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="••••••••" required={!isLogin} />
+            </div>
+          )}
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? "Please wait..." : (isLogin ? "Log In" : "Create Account")}
           </button>
