@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "./supabaseClient";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -379,6 +380,7 @@ export default function App() {
           {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="forecast"  && <PageForecast data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="settings"  && <PageSettings settings={data.settings} updateSettings={updateSettings} showToast={showToast} onClear={()=>{clearAllData();showToast("All data cleared","warn");}} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="reports"   && <PageReports data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
         </main>
       </div>
     </>
@@ -395,6 +397,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
     {id:"records",icon:"📋",label:"Records"},
     {id:"payments",icon:"💳",label:"Payments"},
     {id:"forecast",icon:"🔮",label:"Forecast"},
+    {id:"reports",icon:"📊",label:"Reports"},
     {id:"settings",icon:"⚙️",label:"Settings"},
   ];
   return (
@@ -770,7 +773,7 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
             </div>
             <div className="fg">
               <label>Meter Photo (Proof)</label>
-              <input ref={imgRef} type="file" accept="image/*" onChange={handleImg} style={{display:"none"}} />
+              <input ref={imgRef} type="file" accept="image/*" capture="environment" onChange={handleImg} style={{display:"none"}} />
               <div className="img-box" onClick={()=>imgRef.current.click()}>
                 {form.imgData
                   ? <img src={form.imgData} alt="meter proof" />
@@ -882,7 +885,7 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
                   <td style={{maxWidth:160,fontSize:12,color:"var(--muted)"}}>{e.note||"—"}</td>
                   <td>
                     {e.imgData
-                      ? <img src={e.imgData} alt="proof" style={{width:44,height:34,objectFit:"cover",borderRadius:4,cursor:"pointer"}} onClick={()=>window.open(e.imgData)} />
+                      ? <img src={e.imgData} alt="proof" style={{width:44,height:34,objectFit:"cover",borderRadius:4,cursor:"pointer",border:"1px solid var(--border)"}} onClick={()=>window.open(e.imgData)} />
                       : <span className="muted" style={{fontSize:12}}>—</span>}
                   </td>
                   <td><button className="btn-ghost" onClick={()=>setDelId(e.id)}>🗑</button></td>
@@ -1304,6 +1307,99 @@ function PageSettings({ settings, updateSettings, showToast, onClear, toggleMenu
           <button className="btn btn-danger" onClick={()=>{ if(window.confirm("Delete ALL data? This cannot be undone.")) onClear(); }}>
             🗑️ Clear All Data
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE: REPORTS
+═══════════════════════════════════════════════════════════════ */
+function PageReports({ data, rate, toggleMenu }) {
+  const [range, setRange] = useState("thisMonth");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  const filtered = withUsed(data.entries).filter(e => {
+    const d = new Date(e.date);
+    const now = new Date();
+    if (range === "thisMonth") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (range === "lastMonth") {
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
+    }
+    if (range === "custom") return (!start || e.date >= start) && (!end || e.date <= end);
+    return true;
+  });
+
+  const exportToExcel = () => {
+    const wsData = filtered.map(e => ({
+      Date: e.date,
+      Time: e.time,
+      "Meter Unit (kWh)": e.unit,
+      "Used (kWh)": e.used,
+      "Cost (LKR)": e.used * rate,
+      Note: e.note || ""
+    }));
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Electricity Report");
+    XLSX.writeFile(wb, `ECB_Report_${range}_${todayStr()}.xlsx`);
+  };
+
+  return (
+    <div>
+      <div className="ph">
+        <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
+          <div className="pt">Usage Reports</div>
+          <div className="ps">Generate and export consumption reports</div>
+        </div>
+      </div>
+
+      <div className="card" style={{marginBottom: 20}}>
+        <div className="row3" style={{alignItems:"flex-end"}}>
+          <div className="fg">
+            <label>Report Range</label>
+            <select value={range} onChange={e=>setRange(e.target.value)}>
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="all">All Records</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          {range === "custom" && (
+            <>
+              <div className="fg">
+                <label>Start Date</label>
+                <input type="date" value={start} onChange={e=>setStart(e.target.value)} />
+              </div>
+              <div className="fg">
+                <label>End Date</label>
+                <input type="date" value={end} onChange={e=>setEnd(e.target.value)} />
+              </div>
+            </>
+          )}
+          <button className="btn btn-primary" onClick={exportToExcel} style={{height:42}}>📥 Export to Excel</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-label">Report Preview ({filtered.length} entries)</div>
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Unit</th><th>Used</th><th>Cost</th><th>Note</th></tr></thead>
+            <tbody>{filtered.map(e=>(
+              <tr key={e.id}>
+                <td className="mono" style={{fontSize:12}}>{e.date}</td>
+                <td className="mono cyan">{fmtNum(e.unit,1)}</td>
+                <td className="green">{fmtNum(e.used,2)} kWh</td>
+                <td className="amber">{fmtLKR(e.used*rate)}</td>
+                <td className="muted" style={{fontSize:11}}>{e.note||"—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
         </div>
       </div>
     </div>
