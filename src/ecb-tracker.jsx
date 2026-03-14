@@ -256,7 +256,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(null);\n  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -326,6 +326,16 @@ export default function App() {
     await supabase.from("payments").delete().neq("id", 0);
   };
 
+  if (recoveryMode) {
+    return (
+      <>
+        <style>{CSS}</style>
+        {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+        <ResetPasswordScreen showToast={showToast} onComplete={() => setRecoveryMode(false)} />
+      </>
+    );
+  }
+
   if(!session) {
     return (
       <>
@@ -382,7 +392,28 @@ function Sidebar({ isMenuOpen, closeMenu, page, setPage, settings, viewMode, set
           <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px",maxHeight:"60px",objectFit:"contain"}} />
           <div className="brand-sub" style={{marginTop:"8px"}}>Secure Login</div>
         </div>
-        <form onSubmit={handleSubmit}>
+        {isForgot ? (
+            <form onSubmit={async (e)=>{
+              e.preventDefault();
+              setLoading(true);
+              const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+              setLoading(false);
+              if(error) showToast(error.message, "warn");
+              else { showToast("Password reset link sent!", "ok"); setIsForgot(false); }
+            }}>
+              <div className="fg" style={{marginBottom: 24}}>
+                <label>Email Address</label>
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" required />
+              </div>
+              <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                {loading ? "Please wait..." : "Send Reset Link"}
+              </button>
+              <div style={{textAlign: "center", marginTop: 20, fontSize: 13}}>
+                <span style={{color: "var(--cyan)", cursor: "pointer"}} onClick={() => setIsForgot(false)}>Back to Login</span>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit}>
           {!isLogin && (
             <>
               <div className="fg" style={{marginBottom: 16}}>
@@ -418,6 +449,52 @@ function Sidebar({ isMenuOpen, closeMenu, page, setPage, settings, viewMode, set
             {isLogin ? "Sign Up" : "Log In"}
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET PASSWORD SCREEN
+═══════════════════════════════════════════════════════════════ */
+function ResetPasswordScreen({ showToast, onComplete }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) return showToast("Passwords do not match", "warn");
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) showToast(error.message, "warn");
+    else {
+      showToast("Password updated successfully!", "ok");
+      onComplete();
+    }
+  };
+
+  return (
+    <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding: 20}}>
+      <div className="card" style={{width: 360, maxWidth: "100%"}}>
+        <div className="brand" style={{borderBottom:"none", padding:"0 0 20px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center"}}>
+          <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px",maxHeight:"60px",objectFit:"contain"}} />
+          <div className="brand-sub" style={{marginTop:"8px"}}>Reset Password</div>
+        </div>
+        <form onSubmit={handleReset}>
+          <div className="fg" style={{marginBottom: 16}}>
+            <label>New Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          </div>
+          <div className="fg" style={{marginBottom: 24}}>
+            <label>Confirm New Password</label>
+            <input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} required />
+          </div>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
       </div>
     </div>
   );
