@@ -228,14 +228,34 @@ tbody tr:hover td{background:rgba(255,255,255,.015);}
 .pay-month{font-size:14px;font-weight:700;}
 .pay-detail{font-size:11px;color:var(--muted);line-height:1.7;}
 
-@media(max-width:860px){
-  .aside{width:58px;}
-  .brand-name,.brand-sub,.nav-item span,.aside-footer{display:none;}
-  .nav-item{justify-content:center;padding:10px;}
+@media(max-width:768px){
+  .aside{
+    position:fixed; left:-230px; z-index:9001; transition:left .3s ease; 
+    box-shadow:10px 0 30px rgba(0,0,0,.5); width:230px;
+  }
+  .aside.open{left:0;}
+  .main{max-width:100%; padding:16px;}
+  .ph-left{text-align:center; width:100%;}
+  .pt{font-size:20px;}
+  .vtab{width:100%; order:2;}
   .grid4{grid-template-columns:repeat(2,1fr);}
   .grid3{grid-template-columns:repeat(2,1fr);}
-  .row2,.row3{grid-template-columns:1fr;}
-  .main{padding:16px;max-width:calc(100vw - 58px);}
+  .hamburger{
+    display:flex; position:absolute; left:16px; top:28px; background:var(--s2);
+    border:1px solid var(--border); color:var(--cyan); font-size:20px;
+    padding:8px; border-radius:var(--r2); cursor:pointer; z-index:9002;
+  }
+  .overlay-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9000;
+    opacity:0; visibility:hidden; transition:all .3s;
+  }
+  .overlay-bg.open{opacity:1; visibility:visible;}
+  
+  /* Tables */
+  .tbl-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+}
+@media(min-width:769px){
+  .hamburger{display:none;}
 }
 `;
 
@@ -254,6 +274,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState("daily"); // daily | weekly | monthly
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [session, setSession] = useState(null);
 
@@ -348,14 +369,15 @@ export default function App() {
       <style>{CSS}</style>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div className="shell">
-        <Sidebar page={page} setPage={setPage} settings={data.settings} viewMode={viewMode} setViewMode={setViewMode} showViewToggle={["dashboard","records"].includes(page)} />
+        <div className={`overlay-bg ${isMenuOpen ? "open" : ""}`} onClick={() => setIsMenuOpen(false)} />
+        <Sidebar page={page} setPage={setPage} settings={data.settings} viewMode={viewMode} setViewMode={setViewMode} showViewToggle={["dashboard","records"].includes(page)} isMenuOpen={isMenuOpen} closeMenu={() => setIsMenuOpen(false)} />
         <main className="main">
-          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} />}
-          {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} />}
-          {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} />}
-          {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} />}
-          {page==="forecast"  && <PageForecast data={data} rate={rate} />}
-          {page==="settings"  && <PageSettings settings={data.settings} updateSettings={updateSettings} showToast={showToast} onClear={()=>{clearAllData();showToast("All data cleared","warn");}} />}
+          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="forecast"  && <PageForecast data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="settings"  && <PageSettings settings={data.settings} updateSettings={updateSettings} showToast={showToast} onClear={()=>{clearAllData();showToast("All data cleared","warn");}} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
         </main>
       </div>
     </>
@@ -365,7 +387,7 @@ export default function App() {
 /* ═══════════════════════════════════════════════════════════════
    SIDEBAR
 ═══════════════════════════════════════════════════════════════ */
-function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggle }) {
+function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggle, isMenuOpen, closeMenu }) {
   const nav = [
     {id:"dashboard",icon:"⚡",label:"Dashboard"},
     {id:"log",icon:"📝",label:"Log Reading"},
@@ -375,7 +397,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
     {id:"settings",icon:"⚙️",label:"Settings"},
   ];
   return (
-    <aside className="aside">
+    <aside className={`aside ${isMenuOpen ? "open" : ""}`}>
       <div className="brand">
         <div className="brand-icon">⚡</div>
         <div className="brand-name">ECB TRACKER</div>
@@ -384,7 +406,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
       <div className="nav-section">
         <div className="nav-label">Navigation</div>
         {nav.map(n=>(
-          <button key={n.id} className={`nav-item ${page===n.id?"active":""}`} onClick={()=>setPage(n.id)}>
+          <button key={n.id} className={`nav-item ${page===n.id?"active":""}`} onClick={()=>{setPage(n.id); closeMenu();}}>
             <span className="ni">{n.icon}</span><span>{n.label}</span>
           </button>
         ))}
@@ -401,7 +423,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
 /* ═══════════════════════════════════════════════════════════════
    PAGE: DASHBOARD
 ═══════════════════════════════════════════════════════════════ */
-function PageDashboard({ data, rate, viewMode, setViewMode }) {
+function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu }) {
   const computed = withUsed(data.entries);
   const today = todayStr();
 
@@ -432,6 +454,7 @@ function PageDashboard({ data, rate, viewMode, setViewMode }) {
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Dashboard</div>
           <div className="ps">Overview of your electricity consumption</div>
         </div>
@@ -612,7 +635,7 @@ function MonthlyTable({ entries, rate, payments }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: LOG ENTRY
 ═══════════════════════════════════════════════════════════════ */
-function PageLog({ entries, rate, addEntry, showToast }) {
+function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
   const blank = { date:todayStr(), time:nowTime(), unit:"", note:"", appliances:[], imgData:null, imgName:"" };
   const [form, setForm] = useState(blank);
   const [customAp, setCustomAp] = useState("");
@@ -687,6 +710,7 @@ function PageLog({ entries, rate, addEntry, showToast }) {
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Log Meter Reading</div>
           <div className="ps">Enter your electricity meter details and proof</div>
         </div>
@@ -804,7 +828,7 @@ function PageLog({ entries, rate, addEntry, showToast }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: RECORDS
 ═══════════════════════════════════════════════════════════════ */
-function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast }) {
+function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast, toggleMenu }) {
   const [delId, setDelId] = useState(null);
   const computed = withUsed(data.entries).reverse(); // newest first
 
@@ -814,6 +838,7 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Records</div>
           <div className="ps">{data.entries.length} total readings logged</div>
         </div>
@@ -958,7 +983,7 @@ function WeeklyDetailView({ entries, rate }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: PAYMENTS
 ═══════════════════════════════════════════════════════════════ */
-function PagePayments({ data, rate, upsertPayment, showToast }) {
+function PagePayments({ data, rate, upsertPayment, showToast, toggleMenu }) {
   const blank = { month:new Date().toISOString().slice(0,7), lastUnits:"", billAmount:"", paidAmount:"", paid:false, bank:"", payeeName:"", payeeAccount:"", note:"" };
   const [form, setForm] = useState(blank);
 
@@ -990,6 +1015,7 @@ function PagePayments({ data, rate, upsertPayment, showToast }) {
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Payment Records</div>
           <div className="ps">Track monthly bill payments and bank details</div>
         </div>
@@ -1093,7 +1119,7 @@ function PagePayments({ data, rate, upsertPayment, showToast }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: FORECAST
 ═══════════════════════════════════════════════════════════════ */
-function PageForecast({ data, rate }) {
+function PageForecast({ data, rate, toggleMenu }) {
   const computed=withUsed(data.entries);
   const today=todayStr();
 
@@ -1128,6 +1154,7 @@ function PageForecast({ data, rate }) {
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Forecast & Analytics</div>
           <div className="ps">Predicted next month bill & usage trends</div>
         </div>
@@ -1226,7 +1253,7 @@ function PageForecast({ data, rate }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: SETTINGS
 ═══════════════════════════════════════════════════════════════ */
-function PageSettings({ settings, updateSettings, showToast, onClear }) {
+function PageSettings({ settings, updateSettings, showToast, onClear, toggleMenu }) {
   const [form, setForm] = useState({...settings});
   const setF=(k,v)=>setForm(f=>({...f,[k]:v}));
   const save=()=>{ updateSettings(form); showToast("⚙️ Settings saved!"); };
@@ -1235,6 +1262,7 @@ function PageSettings({ settings, updateSettings, showToast, onClear }) {
     <div>
       <div className="ph">
         <div className="ph-left">
+          <button className="hamburger" onClick={toggleMenu}>☰</button>
           <div className="pt">Settings</div>
           <div className="ps">Configure your ECB account and billing rate</div>
         </div>
