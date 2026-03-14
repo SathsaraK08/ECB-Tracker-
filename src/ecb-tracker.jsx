@@ -398,10 +398,9 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
   ];
   return (
     <aside className={`aside ${isMenuOpen ? "open" : ""}`}>
-      <div className="brand">
-        <div className="brand-icon">⚡</div>
-        <div className="brand-name">ECB TRACKER</div>
-        <div className="brand-sub">Electricity Monitor</div>
+      <div className="brand" style={{display:"flex", flexDirection:"column", alignItems:"center", paddingBottom:"10px"}}>
+        <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px", maxHeight:"60px", objectFit:"contain"}} />
+        <div className="brand-sub" style={{marginTop:"8px"}}>Electricity Monitor</div>
       </div>
       <div className="nav-section">
         <div className="nav-label">Navigation</div>
@@ -1398,10 +1397,9 @@ function LoginScreen({ showToast }) {
   return (
     <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding: 20}}>
       <div className="card" style={{width: 360, maxWidth: "100%"}}>
-        <div className="brand" style={{borderBottom:"none", padding:"0 0 20px", textAlign:"center"}}>
-          <div className="brand-icon">⚡</div>
-          <div className="brand-name">ECB TRACKER</div>
-          <div className="brand-sub">Secure Login</div>
+        <div className="brand" style={{borderBottom:"none", padding:"0 0 20px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center"}}>
+          <img src="/assets/logo.png" alt="ECB Tracker Logo" style={{maxWidth:"150px", maxHeight:"60px", objectFit:"contain"}} />
+          <div className="brand-sub" style={{marginTop:"8px"}}>Secure Login</div>
         </div>
         <form onSubmit={handleSubmit}>
           {!isLogin && (
