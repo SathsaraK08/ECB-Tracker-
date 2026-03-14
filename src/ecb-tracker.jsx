@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as XLSX from "xlsx";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabase } from "./supabaseClient";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -378,7 +379,7 @@ export default function App() {
           {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="forecast"  && <PageForecast data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          {page==="forecast"  && <PageForecast data={data} rate={rate} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="settings"  && <PageSettings settings={data.settings} updateSettings={updateSettings} showToast={showToast} onClear={()=>{clearAllData();showToast("All data cleared","warn");}} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
           {page==="reports"   && <PageReports data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
         </main>
@@ -1124,10 +1125,63 @@ function PagePayments({ data, rate, upsertPayment, showToast, toggleMenu }) {
   );
 }
 
+function AIInsights({ data, settings, showToast }) {
+  const [insight, setInsight] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const getAIAnalysis = async () => {
+    if (!settings.aiKey) {
+      showToast("Please add your Gemini API Key in Settings first", "warn");
+      return;
+    }
+    setLoading(true);
+    try {
+      const genAI = new GoogleGenerativeAI(settings.aiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const usageData = withUsed(data.entries).slice(-10).map(e => ({
+        date: e.date,
+        used: e.used,
+        appliances: e.appliances
+      }));
+
+      const prompt = `Analyze this electricity usage data for a home in Sri Lanka: ${JSON.stringify(usageData)}. 
+      Provide a concise 3-bullet point analysis on energy saving tips. 
+      Keep it practical and specific to the data. Format as markdown bullets.`;
+
+      const result = await model.generateContent(prompt);
+      setInsight(result.response.text());
+    } catch (err) {
+      showToast("AI analysis failed: " + err.message, "warn");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{marginBottom: 20, border:"1px solid var(--purple)"}}>
+      <div className="card-label" style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+        <span>🔮 AI Smart Insights</span>
+        <button className="btn btn-primary btn-sm" onClick={getAIAnalysis} disabled={loading}>
+          {loading ? "Analyzing..." : "Regenerate Tips"}
+        </button>
+      </div>
+      <div style={{marginTop: 14, fontSize: 13, lineHeight: 1.6, color: "var(--text)"}}>
+        {insight ? (
+          <div className="ai-content" style={{whiteSpace:"pre-wrap"}}>{insight}</div>
+        ) : (
+          <div style={{color:"var(--muted)", fontStyle:"italic"}}>Click "Regenerate Tips" to analyze your recent consumption patterns.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    PAGE: FORECAST
 ═══════════════════════════════════════════════════════════════ */
-function PageForecast({ data, rate, toggleMenu }) {
+function PageForecast({ data, rate, toggleMenu, showToast }) {
+  const settings = data.settings;
   const computed=withUsed(data.entries);
   const today=todayStr();
 
@@ -1167,7 +1221,7 @@ function PageForecast({ data, rate, toggleMenu }) {
           <div className="ps">Predicted next month bill & usage trends</div>
         </div>
       </div>
-
+      <AIInsights data={data} settings={settings} showToast={showToast} />
       <div className="grid3">
         <Stat label="Avg Daily Usage" val={`${fmtNum(avgPerDay,2)} kWh`} sub="Based on last 30 days" color="" />
         <Stat label="Next 30-Day Forecast" val={`${fmtNum(forecast30,1)} kWh`} sub={fmtLKR(forecast30*rate)} color="a" />
@@ -1286,6 +1340,12 @@ function PageSettings({ settings, updateSettings, showToast, onClear, toggleMenu
           <div className="fg" style={{marginBottom:14}}>
             <label>Account Owner Name</label>
             <input placeholder="e.g. Sathsara Perera" value={form.ownerName} onChange={e=>setF("ownerName",e.target.value)} />
+          </div>
+          <div className="form-title" style={{marginTop:20}}>🧠 AI Configuration</div>
+          <div className="fg" style={{marginBottom:14}}>
+            <label>Gemini API Key</label>
+            <input type="password" placeholder="Paste your Gemini API key here" value={form.aiKey||""} onChange={e=>setF("aiKey",e.target.value)} />
+            <div style={{fontSize:10,color:"var(--muted)",marginTop:4}}>Get a key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{color:"var(--cyan)"}}>Google AI Studio</a></div>
           </div>
           <div className="form-title" style={{marginTop:20}}>💰 Billing Rate</div>
           <div className="fg" style={{marginBottom:6}}>
