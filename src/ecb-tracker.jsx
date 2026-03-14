@@ -439,7 +439,7 @@ function Sidebar({ page, setPage, settings, viewMode, setViewMode, showViewToggl
 /* ═══════════════════════════════════════════════════════════════
    PAGE: DASHBOARD
 ═══════════════════════════════════════════════════════════════ */
-function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu }) {
+function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu, deferredPrompt, setDeferredPrompt }) {
   const computed = withUsed(data.entries);
   const today = todayStr();
 
