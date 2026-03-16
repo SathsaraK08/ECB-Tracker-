@@ -1,20 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /* ═══════════════════════════════════════════════════════════════
-   STORAGE
-═══════════════════════════════════════════════════════════════ */
-const SKEY = "ecb_v2";
-const persist = async (data) => {
-  try { localStorage.setItem(SKEY, JSON.stringify(data)); } catch(e) {}
-};
-const hydrate = async () => {
-  try {
-    const raw = localStorage.getItem(SKEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
-};
-
-/* ═══════════════════════════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════════════════════════ */
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -260,16 +246,7 @@ export default function App() {
   const [data, setData] = useState(INIT);
   const [page, setPage] = useState("dashboard");
   const [viewMode, setViewMode] = useState("daily"); // daily | weekly | monthly
-  const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
-
-  useEffect(() => {
-    hydrate().then(d => { if(d) setData(prev=>({...INIT,...d})); setLoaded(true); });
-  }, []);
-
-  useEffect(() => {
-    if(loaded) persist(data);
-  }, [data, loaded]);
 
   const showToast = (msg, type="ok") => {
     setToast({msg,type});
@@ -286,12 +263,6 @@ export default function App() {
       return {...d,payments:[...d.payments,p]};
     });
   };
-
-  if(!loaded) return (
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#07090f",color:"#00d4ff",fontFamily:"monospace",fontSize:14}}>
-      ⚡ Loading ECB Tracker…
-    </div>
-  );
 
   const rate = parseFloat(data.settings.lkrPerUnit)||30;
 

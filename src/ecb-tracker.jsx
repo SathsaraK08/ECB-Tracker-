@@ -97,6 +97,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 .card-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
 .card-val{font-family:var(--mono);font-size:26px;font-weight:500;color:var(--cyan);}
 .card-val.g{color:var(--green);}.card-val.a{color:var(--amber);}.card-val.p{color:var(--purple);}
+.card-val-sub{font-size:26px;font-weight:500;color:var(--text);}
 .card-meta{font-size:12px;color:var(--muted);margin-top:5px;}
 
 /* ── FORM ── */
@@ -229,34 +230,155 @@ tbody tr:hover td{background:rgba(255,255,255,.015);}
 .pay-month{font-size:14px;font-weight:700;}
 .pay-detail{font-size:11px;color:var(--muted);line-height:1.7;}
 
+.mobile-header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:56px;
+  background:#07090f;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  z-index:9001;
+}
+.mobile-header-title{
+  flex:1;
+  text-align:center;
+  font-size:16px;
+  font-weight:700;
+}
+.mobile-header-side{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.mobile-header-logo{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--s2);
+}
+.mobile-header-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.bottom-nav{
+  position:fixed;
+  left:0;right:0;bottom:0;
+  height:64px;
+  background:#0d1117;
+  border-top:1px solid #1e2d45;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-around;
+  padding:6px 4px env(safe-area-inset-bottom);
+  z-index:9001;
+}
+.bottom-nav-item{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  color:#4a6080;
+  font-size:11px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+}
+.bottom-nav-item-active{
+  color:#00d4ff;
+}
+.bottom-nav-icon{
+  font-size:22px;
+  line-height:1;
+}
+.bottom-nav-dot{
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#00d4ff;
+}
+.more-sheet-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:9002;
+}
+.more-sheet{
+  width:100%;
+  max-width:480px;
+  background:var(--s1);
+  border-radius:16px 16px 0 0;
+  border-top:1px solid var(--border2);
+  padding:12px 16px 16px;
+}
+.more-sheet-handle{
+  width:40px;
+  height:4px;
+  border-radius:999px;
+  background:var(--border2);
+  margin:0 auto 10px;
+}
+.more-sheet-title{
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:8px;
+}
+.more-sheet-list button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 4px;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-size:14px;
+  cursor:pointer;
+}
+.more-sheet-list button span:first-child{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.fade-page{
+  animation:fadeInPage .2s ease;
+}
+@keyframes fadeInPage{
+  from{opacity:0;transform:translateY(4px);}
+  to{opacity:1;transform:translateY(0);}
+}
 @media(max-width:768px){
-  .aside{
-    position:fixed; left:-230px; z-index:9001; transition:left .3s ease; 
-    box-shadow:10px 0 30px rgba(0,0,0,.5); width:230px;
+  .aside{display:none;}
+  .main{
+    max-width:100%;
+    padding:16px;
+    padding-top:72px;
+    padding-bottom:88px;
   }
-  .aside.open{left:0;}
-  .main{max-width:100%; padding:16px;}
-  .ph-left{text-align:center; width:100%;}
-  .pt{font-size:20px;}
-  .vtab{width:100%; order:2;}
   .grid4{grid-template-columns:repeat(2,1fr);}
   .grid3{grid-template-columns:repeat(2,1fr);}
-  .hamburger{
-    display:flex; position:absolute; left:16px; top:28px; background:var(--s2);
-    border:1px solid var(--border); color:var(--cyan); font-size:20px;
-    padding:8px; border-radius:var(--r2); cursor:pointer; z-index:9002;
-  }
-  .overlay-bg{
-    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9000;
-    opacity:0; visibility:hidden; transition:all .3s;
-  }
-  .overlay-bg.open{opacity:1; visibility:visible;}
-  
-  /* Tables */
   .tbl-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
 }
 @media(min-width:769px){
-  .hamburger{display:none;}
+  .mobile-header,
+  .bottom-nav,
+  .more-sheet-bg{
+    display:none;
+  }
 }
 `;
 
@@ -276,7 +398,11 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // desktop sidebar only
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [availableVersion, setAvailableVersion] = useState(null);
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -286,6 +412,33 @@ export default function App() {
   }, []);
 
   const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    async function checkVersion() {
+      try {
+        const res = await fetch("https://ecbtracker.vercel.app/version.json", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        const latest = json?.version;
+        if (!latest) return;
+        const stored = localStorage.getItem("app_version");
+        if (stored !== latest) {
+          setAvailableVersion(latest);
+        }
+      } catch (e) {
+        console.error("Version check failed", e);
+      }
+    }
+    checkVersion();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -303,17 +456,27 @@ export default function App() {
 
   useEffect(() => {
     async function loadData() {
-      if (!session) return;
+      if (!session?.user?.id) return;
       try {
         const [settingsRes, entriesRes, paymentsRes] = await Promise.all([
-          supabase.from("settings").select("*").eq("id", 1).maybeSingle(),
-          supabase.from("entries").select("*"),
-          supabase.from("payments").select("*")
+          supabase
+            .from("settings")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .maybeSingle(),
+          supabase
+            .from("entries")
+            .select("*")
+            .eq("user_id", session.user.id),
+          supabase
+            .from("payments")
+            .select("*")
+            .eq("user_id", session.user.id),
         ]);
         setData({
           settings: settingsRes.data || INIT.settings,
           entries: entriesRes.data || [],
-          payments: paymentsRes.data || []
+          payments: paymentsRes.data || [],
         });
       } catch (e) {
         console.error("Error loading data", e);
@@ -329,30 +492,126 @@ export default function App() {
     setTimeout(()=>setToast(null), 3200);
   };
 
+  const reloadEntries = async () => {
+    if (!session?.user?.id) return;
+    const { data: rows, error } = await supabase
+      .from("entries")
+      .select("*")
+      .eq("user_id", session.user.id);
+    if (error) {
+      console.error("Error reloading entries", error);
+      return;
+    }
+    setData((d) => ({ ...d, entries: rows || [] }));
+  };
+
   const updateSettings = async (s) => {
-    setData(d=>({...d,settings:s}));
-    await supabase.from("settings").upsert({ id: 1, user_id: session.user.id, ...s });
+    if (!session?.user?.id) return;
+    setData((d) => ({ ...d, settings: s }));
+    await supabase
+      .from("settings")
+      .upsert({ user_id: session.user.id, ...s });
   };
+
   const addEntry = async (e) => {
-    setData(d=>({...d,entries:[...d.entries,e]}));
-    await supabase.from("entries").insert({ ...e, user_id: session.user.id });
+    if (!session?.user?.id) return;
+    try {
+      const { data: rows, error } = await supabase
+        .from("entries")
+        .insert({ ...e, user_id: session.user.id })
+        .select()
+        .limit(1);
+      if (error) throw error;
+      const inserted = rows && rows[0];
+      if (inserted) {
+        setData((d) => ({ ...d, entries: [...d.entries, inserted] }));
+      }
+    } catch (error) {
+      console.error("Error adding entry", error);
+    }
   };
+
+  const updateEntry = async (id, updates) => {
+    if (!session?.user?.id) return;
+    const { error } = await supabase
+      .from("entries")
+      .update({ ...updates })
+      .eq("id", id)
+      .eq("user_id", session.user.id);
+    if (error) {
+      console.error("Error updating entry", error);
+      throw error;
+    }
+    await reloadEntries();
+  };
+
   const deleteEntry = async (id) => {
-    setData(d=>({...d,entries:d.entries.filter(e=>e.id!==id)}));
-    await supabase.from("entries").delete().eq("id", id);
+    if (!session?.user?.id) return;
+    setData((d) => ({ ...d, entries: d.entries.filter((e) => e.id !== id) }));
+    await supabase
+      .from("entries")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", session.user.id);
   };
+
   const upsertPayment = async (p) => {
-    setData(d=>{
-      const idx=d.payments.findIndex(x=>x.month===p.month);
-      if(idx>=0){ const arr=[...d.payments]; arr[idx]=p; return {...d,payments:arr}; }
-      return {...d,payments:[...d.payments,p]};
-    });
-    await supabase.from("payments").upsert({ ...p, user_id: session.user.id });
+    if (!session?.user?.id) return;
+    try {
+      const { data: rows, error } = await supabase
+        .from("payments")
+        .upsert({ ...p, user_id: session.user.id })
+        .select()
+        .limit(1);
+      if (error) throw error;
+      const saved = rows && rows[0];
+      if (saved) {
+        setData((d) => {
+          const idx = d.payments.findIndex((x) => x.month === saved.month);
+          if (idx >= 0) {
+            const arr = [...d.payments];
+            arr[idx] = saved;
+            return { ...d, payments: arr };
+          }
+          return { ...d, payments: [...d.payments, saved] };
+        });
+      }
+    } catch (error) {
+      console.error("Error saving payment", error);
+    }
   };
+
   const clearAllData = async () => {
+    if (!session?.user?.id) return;
     setData(INIT);
-    await supabase.from("entries").delete().neq("id", 0);
-    await supabase.from("payments").delete().neq("id", 0);
+    await Promise.all([
+      supabase.from("entries").delete().eq("user_id", session.user.id),
+      supabase.from("payments").delete().eq("user_id", session.user.id),
+    ]);
+  };
+
+  const currentTitle = (() => {
+    switch(page){
+      case "dashboard": return "Dashboard";
+      case "log": return "Log Reading";
+      case "records": return "Records";
+      case "payments": return "Payments";
+      case "forecast": return "Forecast";
+      case "settings": return "Settings";
+      case "reports": return "Reports";
+      default: return "ECB Tracker";
+    }
+  })();
+
+  const handleUpdateBannerClick = () => {
+    if (availableVersion) {
+      try {
+        localStorage.setItem("app_version", availableVersion);
+      } catch (e) {
+        console.error("Failed to store app_version", e);
+      }
+    }
+    window.location.reload(true);
   };
 
   if(!session) {
@@ -378,19 +637,205 @@ export default function App() {
     <>
       <style>{CSS}</style>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+      {availableVersion && (
+        <div
+          style={{
+            position:"fixed",
+            top:0,
+            left:0,
+            right:0,
+            zIndex:9500,
+            background:"var(--cyan)",
+            color:"#000",
+            padding:"10px 16px",
+            fontSize:14,
+            fontWeight:600,
+            textAlign:"center",
+            cursor:"pointer",
+          }}
+          onClick={handleUpdateBannerClick}
+        >
+          ⚡ New update available — tap to refresh
+        </div>
+      )}
+      {isMobile && (
+        <div className="mobile-header">
+          <div className="mobile-header-logo">
+            <img src="/assets/logo.png" alt="ECB Tracker" />
+          </div>
+          <div className="mobile-header-title">{currentTitle}</div>
+          <div className="mobile-header-side">
+            <span role="img" aria-label="notifications">🔔</span>
+          </div>
+        </div>
+      )}
       <div className="shell">
-        <div className={`overlay-bg ${isMenuOpen ? "open" : ""}`} onClick={() => setIsMenuOpen(false)} />
-        <Sidebar page={page} setPage={setPage} settings={data.settings} viewMode={viewMode} setViewMode={setViewMode} showViewToggle={["dashboard","records"].includes(page)} isMenuOpen={isMenuOpen} closeMenu={() => setIsMenuOpen(false)} />
+        {!isMobile && (
+          <>
+            <div className={`overlay-bg ${isMenuOpen ? "open" : ""}`} onClick={() => setIsMenuOpen(false)} />
+            <Sidebar
+              page={page}
+              setPage={setPage}
+              settings={data.settings}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              showViewToggle={["dashboard","records"].includes(page)}
+              isMenuOpen={isMenuOpen}
+              closeMenu={() => setIsMenuOpen(false)}
+            />
+          </>
+        )}
         <main className="main">
-          {page==="dashboard" && <PageDashboard data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
-          {page==="log"       && <PageLog entries={data.entries} rate={rate} addEntry={addEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="records"   && <PageRecords data={data} rate={rate} viewMode={viewMode} setViewMode={setViewMode} deleteEntry={deleteEntry} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="payments"  && <PagePayments data={data} rate={rate} upsertPayment={upsertPayment} showToast={showToast} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="forecast"  && <PageForecast data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="settings"  && <PageSettings settings={data.settings} updateSettings={updateSettings} showToast={showToast} onClear={()=>{clearAllData();showToast("All data cleared","warn");}} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
-          {page==="reports"   && <PageReports data={data} rate={rate} toggleMenu={() => setIsMenuOpen(!isMenuOpen)} />}
+          <div className="fade-page">
+            {page==="dashboard" && (
+              <PageDashboard
+                data={data}
+                rate={rate}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                deferredPrompt={deferredPrompt}
+                setDeferredPrompt={setDeferredPrompt}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="log" && (
+              <PageLog
+                entries={data.entries}
+                rate={rate}
+                addEntry={addEntry}
+                updateEntry={updateEntry}
+                editingEntry={editingEntry}
+                onDoneEditing={() => setEditingEntry(null)}
+                showToast={showToast}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="records" && (
+              <PageRecords
+                data={data}
+                rate={rate}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                deleteEntry={deleteEntry}
+                onEditEntry={(entry) => { setEditingEntry(entry); setPage("log"); }}
+                showToast={showToast}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="payments" && (
+              <PagePayments
+                data={data}
+                rate={rate}
+                upsertPayment={upsertPayment}
+                showToast={showToast}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="forecast" && (
+              <PageForecast
+                data={data}
+                rate={rate}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="settings" && (
+              <PageSettings
+                settings={data.settings}
+                updateSettings={updateSettings}
+                showToast={showToast}
+                onClear={() => { clearAllData(); showToast("All data cleared","warn"); }}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+            {page==="reports" && (
+              <PageReports
+                data={data}
+                rate={rate}
+                toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+                isMobile={isMobile}
+              />
+            )}
+          </div>
         </main>
       </div>
+      {isMobile && (
+        <>
+          <div className="bottom-nav">
+            <button
+              className={`bottom-nav-item ${page==="dashboard"?"bottom-nav-item-active":""}`}
+              onClick={() => { setPage("dashboard"); setMoreOpen(false); }}
+            >
+              <div className="bottom-nav-icon">⚡</div>
+              <div>Home</div>
+              {page==="dashboard" && <div className="bottom-nav-dot" />}
+            </button>
+            <button
+              className={`bottom-nav-item ${page==="log"?"bottom-nav-item-active":""}`}
+              onClick={() => { setPage("log"); setMoreOpen(false); }}
+            >
+              <div className="bottom-nav-icon">📝</div>
+              <div>Log</div>
+              {page==="log" && <div className="bottom-nav-dot" />}
+            </button>
+            <button
+              className={`bottom-nav-item ${page==="records"?"bottom-nav-item-active":""}`}
+              onClick={() => { setPage("records"); setMoreOpen(false); }}
+            >
+              <div className="bottom-nav-icon">📋</div>
+              <div>Records</div>
+              {page==="records" && <div className="bottom-nav-dot" />}
+            </button>
+            <button
+              className={`bottom-nav-item ${page==="payments"?"bottom-nav-item-active":""}`}
+              onClick={() => { setPage("payments"); setMoreOpen(false); }}
+            >
+              <div className="bottom-nav-icon">💳</div>
+              <div>Payments</div>
+              {page==="payments" && <div className="bottom-nav-dot" />}
+            </button>
+            <button
+              className={`bottom-nav-item ${page==="more"?"bottom-nav-item-active":""}`}
+              onClick={() => setMoreOpen(true)}
+            >
+              <div className="bottom-nav-icon">☰</div>
+              <div>More</div>
+              {moreOpen && <div className="bottom-nav-dot" />}
+            </button>
+          </div>
+          {moreOpen && (
+            <div className="more-sheet-bg" onClick={() => setMoreOpen(false)}>
+              <div className="more-sheet" onClick={e=>e.stopPropagation()}>
+                <div className="more-sheet-handle" />
+                <div className="more-sheet-title">More</div>
+                <div className="more-sheet-list">
+                  <button onClick={() => { setPage("forecast"); setMoreOpen(false); }}>
+                    <span><span>🔮</span><span>Forecast</span></span>
+                    <span>›</span>
+                  </button>
+                  <button onClick={() => { setPage("reports"); setMoreOpen(false); }}>
+                    <span><span>📊</span><span>Reports</span></span>
+                    <span>›</span>
+                  </button>
+                  <button onClick={() => { setPage("settings"); setMoreOpen(false); }}>
+                    <span><span>⚙️</span><span>Settings</span></span>
+                    <span>›</span>
+                  </button>
+                  <button onClick={() => { if(window.confirm("Sign Out?")) supabase.auth.signOut(); }}>
+                    <span><span>🚪</span><span>Sign Out</span></span>
+                    <span>›</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -510,11 +955,16 @@ function PageDashboard({ data, rate, viewMode, setViewMode, toggleMenu, deferred
       </div>
 
       <div className="card" style={{marginBottom:20}}>
-        <div className="card-label">Last 7 Days — Daily Usage (kWh)</div>
+        <div className="card-label">Last 7 Days — Daily Usage</div>
         <div className="barchart">
           {last7.map((d,i)=>(
             <div key={i} className="bar-col">
-              {d.units>0&&<div className="bar-val">{fmtNum(d.units,1)}</div>}
+              {d.units>0&&(
+                <div className="bar-val">
+                  <div>{fmtNum(d.units,1)} kWh</div>
+                  <div>{fmtLKR(d.units*rate)}</div>
+                </div>
+              )}
               <div className="bar-body" style={{height:`${Math.max((d.units/maxU)*100,d.units>0?6:2)}px`,opacity:d.units>0?1:.2}} />
               <div className="bar-lbl">{d.label}</div>
             </div>
@@ -534,8 +984,10 @@ function Stat({ label, val, sub, color }) {
   return (
     <div className="card-sm">
       <div className="card-label">{label}</div>
-      <div className={`card-val ${color}`}>{val}</div>
-      <div className="card-meta">{sub}</div>
+      <div>
+        <div className={`card-val ${color}`}>{val}</div>
+        <div className={`card-val-sub ${color}`}>{sub}</div>
+      </div>
     </div>
   );
 }
@@ -552,7 +1004,7 @@ function DailyTable({ entries, rate }) {
     (e.appliances||[]).forEach(a=>byDate[e.date].appliances.add(a));
     if(e.note) byDate[e.date].notes.push(e.note);
   });
-  const rows = Object.values(byDate).sort((a,b)=>b.date.localeCompare(a.date));
+  const rows = Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date));
 
   return (
     <div className="card">
@@ -595,7 +1047,7 @@ function WeeklyTable({ entries, rate }) {
     if(u<byWeek[ws].minUnit) byWeek[ws].minUnit=u;
     if(u>byWeek[ws].maxUnit) byWeek[ws].maxUnit=u;
   });
-  const rows=Object.values(byWeek).sort((a,b)=>b.ws.localeCompare(a.ws));
+  const rows=Object.values(byWeek).sort((a,b)=>a.ws.localeCompare(b.ws));
 
   return (
     <div className="card">
@@ -634,7 +1086,7 @@ function MonthlyTable({ entries, rate, payments }) {
     if(u<byMonth[mk].minUnit) byMonth[mk].minUnit=u;
     if(u>byMonth[mk].maxUnit) byMonth[mk].maxUnit=u;
   });
-  const rows=Object.values(byMonth).sort((a,b)=>b.mk.localeCompare(a.mk));
+  const rows=Object.values(byMonth).sort((a,b)=>a.mk.localeCompare(b.mk));
 
   return (
     <div className="card">
@@ -670,7 +1122,7 @@ function MonthlyTable({ entries, rate, payments }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: LOG ENTRY
 ═══════════════════════════════════════════════════════════════ */
-function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
+function PageLog({ entries, rate, addEntry, updateEntry, editingEntry, onDoneEditing, showToast, toggleMenu }) {
   const blank = { date:todayStr(), time:nowTime(), unit:"", note:"", appliances:[], imgData:null, imgName:"" };
   const [form, setForm] = useState(blank);
   const [customAp, setCustomAp] = useState("");
@@ -678,11 +1130,15 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
 
   const setF = (k,v) => setForm(f=>({...f,[k]:v}));
 
-  // last reading for diff
+  // reading for diff (always previous in chronological order)
   const sorted=[...entries].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
-  const lastEntry=sorted[sorted.length-1];
-  const unitDiff = (lastEntry&&form.unit&&!isNaN(parseFloat(form.unit)))
-    ? Math.max(0, parseFloat(form.unit)-parseFloat(lastEntry.unit))
+  const editIdx = editingEntry ? sorted.findIndex(e => e.id === editingEntry.id) : -1;
+  const prevEntry = editingEntry
+    ? (editIdx > 0 ? sorted[editIdx - 1] : null)
+    : (sorted[sorted.length - 1] || null);
+
+  const unitDiff = (prevEntry&&form.unit&&!isNaN(parseFloat(form.unit)))
+    ? Math.max(0, parseFloat(form.unit)-parseFloat(prevEntry.unit))
     : null;
 
   const toggleAp = (a) => setF("appliances", form.appliances.includes(a)
@@ -705,6 +1161,17 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
 
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!editingEntry) return;
+    setForm({
+      ...blank,
+      ...editingEntry,
+      unit: editingEntry.unit != null ? String(editingEntry.unit) : "",
+      imgData: editingEntry.imgData || null,
+      imgName: editingEntry.imgName || "",
+    });
+  }, [editingEntry, blank]);
+
   const submit = async () => {
     if(!form.unit||isNaN(parseFloat(form.unit))){ showToast("Enter a valid meter reading","warn"); return; }
     if(!form.date){ showToast("Select a date","warn"); return; }
@@ -723,19 +1190,25 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
         }
       }
 
-      const entry = {
+      const payload = {
         ...form,
-        id: Date.now(),
         unit: parseFloat(form.unit),
-        imgData: finalImgData
+        imgData: finalImgData,
       };
-      delete entry.file;
+      delete payload.file;
 
-      await addEntry(entry);
-      showToast("✅ Meter reading saved!");
+      if (editingEntry?.id) {
+        await updateEntry(editingEntry.id, payload);
+        showToast("✅ Reading updated!");
+        onDoneEditing?.();
+      } else {
+        await addEntry(payload);
+        showToast("✅ Meter reading saved!");
+      }
+
       setForm({...blank, date:todayStr(), time:nowTime()});
     } catch (e) {
-      showToast("Error saving reading", "warn");
+      showToast(editingEntry ? "Error updating reading" : "Error saving reading", "warn");
     } finally {
       setSaving(false);
     }
@@ -749,11 +1222,11 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
           <div className="pt">Log Meter Reading</div>
           <div className="ps">Enter your electricity meter details and proof</div>
         </div>
-        {lastEntry && (
+        {prevEntry && (
           <div style={{textAlign:"right"}}>
             <div style={{fontSize:11,color:"var(--muted)"}}>Previous Reading</div>
-            <div style={{fontFamily:"var(--mono)",color:"var(--cyan)",fontSize:20,fontWeight:500}}>{fmtNum(lastEntry.unit,2)} kWh</div>
-            <div style={{fontSize:11,color:"var(--muted)"}}>{lastEntry.date} · {lastEntry.time}</div>
+            <div style={{fontFamily:"var(--mono)",color:"var(--cyan)",fontSize:20,fontWeight:500}}>{fmtNum(prevEntry.unit,2)} kWh</div>
+            <div style={{fontSize:11,color:"var(--muted)"}}>{prevEntry.date} · {prevEntry.time}</div>
           </div>
         )}
       </div>
@@ -853,7 +1326,7 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
         </div>
 
         <button className="btn btn-primary btn-full" onClick={submit} disabled={saving}>
-          {saving ? "⏳ Saving..." : "⚡ Save Meter Reading"}
+          {saving ? (editingEntry ? "⏳ Updating..." : "⏳ Saving...") : (editingEntry ? "✅ Update Reading" : "⚡ Save Meter Reading")}
         </button>
       </div>
     </div>
@@ -863,9 +1336,11 @@ function PageLog({ entries, rate, addEntry, showToast, toggleMenu }) {
 /* ═══════════════════════════════════════════════════════════════
    PAGE: RECORDS
 ═══════════════════════════════════════════════════════════════ */
-function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast, toggleMenu }) {
+function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, onEditEntry, showToast, toggleMenu }) {
   const [delId, setDelId] = useState(null);
-  const computed = withUsed(data.entries).reverse(); // newest first
+  const [newestFirst, setNewestFirst] = useState(false);
+  const computedChrono = withUsed(data.entries); // always chronological for correct unit-diff
+  const computed = newestFirst ? [...computedChrono].reverse() : computedChrono;
 
   const confirmDelete = () => { deleteEntry(delId); setDelId(null); showToast("Reading deleted","warn"); };
 
@@ -877,12 +1352,22 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
           <div className="pt">Records</div>
           <div className="ps">{data.entries.length} total readings logged</div>
         </div>
-        <div className="vtab">
-          {["daily","weekly","monthly"].map(m=>(
-            <button key={m} className={`vt ${viewMode===m?"active":""}`} onClick={()=>setViewMode(m)}>
-              {m.charAt(0).toUpperCase()+m.slice(1)}
-            </button>
-          ))}
+        <div style={{display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", justifyContent:"flex-end"}}>
+          <button
+            className="btn btn-outline btn-sm"
+            style={{whiteSpace:"nowrap"}}
+            onClick={() => setNewestFirst(v => !v)}
+            title="Toggle sort order"
+          >
+            {newestFirst ? "Newest First ↓" : "Oldest First ↑"}
+          </button>
+          <div className="vtab">
+            {["daily","weekly","monthly"].map(m=>(
+              <button key={m} className={`vt ${viewMode===m?"active":""}`} onClick={()=>setViewMode(m)}>
+                {m.charAt(0).toUpperCase()+m.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -894,7 +1379,7 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
           <div className="tbl-wrap">
             <table>
               <thead><tr>
-                <th>Date</th><th>Time</th><th>Meter Unit</th><th>Used</th><th>Cost</th><th>Appliances</th><th>Note</th><th>Proof</th><th></th>
+                <th>Date</th><th>Time</th><th>Meter Unit</th><th>Used</th><th>Cost</th><th>Appliances</th><th>Note</th><th>Proof</th><th></th><th></th>
               </tr></thead>
               <tbody>{computed.map(e=>(
                 <tr key={e.id}>
@@ -915,7 +1400,12 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
                       ? <img src={e.imgData} alt="proof" style={{width:44,height:34,objectFit:"cover",borderRadius:4,cursor:"pointer",border:"1px solid var(--border)"}} onClick={()=>window.open(e.imgData)} />
                       : <span className="muted" style={{fontSize:12}}>—</span>}
                   </td>
-                  <td><button className="btn-ghost" onClick={()=>setDelId(e.id)}>🗑</button></td>
+                  <td>
+                    <button className="btn-ghost" onClick={()=>onEditEntry?.(e)} title="Edit">
+                      ✏️
+                    </button>
+                  </td>
+                  <td><button className="btn-ghost" onClick={()=>setDelId(e.id)} title="Delete">🗑</button></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -924,7 +1414,7 @@ function PageRecords({ data, rate, viewMode, setViewMode, deleteEntry, showToast
       )}
 
       {viewMode==="weekly" && <WeeklyDetailView entries={computed} rate={rate} />}
-      {viewMode==="monthly" && <MonthlyTable entries={withUsed(data.entries)} rate={rate} payments={data.payments} />}
+      {viewMode==="monthly" && <MonthlyTable entries={computedChrono} rate={rate} payments={data.payments} />}
 
       {delId&&(
         <div className="modal-bg">
@@ -953,13 +1443,13 @@ function WeeklyDetailView({ entries, rate }) {
     byWeek[ws].days[e.date].entries.push(e);
   });
 
-  const weeks=Object.values(byWeek).sort((a,b)=>b.ws.localeCompare(a.ws));
+  const weeks=Object.values(byWeek).sort((a,b)=>a.ws.localeCompare(b.ws));
 
   return (
     <div>
       {weeks.length===0&&<div className="card"><EmptyState msg="No weekly data yet." /></div>}
       {weeks.map(w=>{
-        const days=Object.values(w.days).sort((a,b)=>b.date.localeCompare(a.date));
+        const days=Object.values(w.days).sort((a,b)=>a.date.localeCompare(b.date));
         const totalUnits=days.reduce((s,d)=>s+d.units,0);
         const startUnit=Math.min(...w.days[Object.keys(w.days).sort()[0]]?.entries.map(e=>parseFloat(e.unit||0))||[0]);
         const endUnit=Math.max(...w.days[Object.keys(w.days).sort().pop()]?.entries.map(e=>parseFloat(e.unit||0))||[0]);
