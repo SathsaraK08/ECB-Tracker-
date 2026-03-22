@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,10 +20,13 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        val props = java.util.Properties().apply {
+        val props = Properties().apply {
             val f = rootProject.file("local.properties")
-            if (f.exists()) load(f.inputStream())
+            if (f.exists()) {
+                f.inputStream().use { load(it) }
+            }
         }
+
         
         buildConfigField("String", "SUPABASE_URL", 
             "\"${project.findProperty("SUPABASE_URL") ?: props.getProperty("SUPABASE_URL", "")}\"")
