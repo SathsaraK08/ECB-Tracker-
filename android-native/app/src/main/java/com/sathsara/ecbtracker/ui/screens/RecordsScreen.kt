@@ -125,36 +125,12 @@ fun RecordsScreen(viewModel: EntryViewModel = androidx.lifecycle.viewmodel.compo
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(entries) { entry ->
-                val dismissState = rememberSwipeToDismissBoxState()
-                
-                LaunchedEffect(dismissState.currentValue) {
-                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-                        viewModel.deleteEntry(entry.id)
-                    }
-                }
-
-                SwipeToDismissBox(
-                    state = dismissState,
-                    backgroundContent = {
-                        val color = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) RedError else Color.Transparent
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color, RoundedCornerShape(12.dp))
-                                .padding(end = 20.dp),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
-                        }
-                    },
-                    enableDismissFromStartToEnd = false
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Surface),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -167,9 +143,9 @@ fun RecordsScreen(viewModel: EntryViewModel = androidx.lifecycle.viewmodel.compo
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     val isVerified = entry.img_url.isNotEmpty()
-                                    val badgeBg = if (isVerified) GreenSuccess.copy(alpha = 0.1f) else AmberWarn.copy(alpha = 0.1f)
-                                    val badgeBorder = if (isVerified) GreenSuccess.copy(alpha = 0.2f) else AmberWarn.copy(alpha = 0.2f)
-                                    val badgeColor = if (isVerified) GreenSuccess else AmberWarn
+                                    val badgeBg = if (isVerified) GreenSuccess.copy(alpha = 0.1f) else AmberWarning.copy(alpha = 0.1f)
+                                    val badgeBorder = if (isVerified) GreenSuccess.copy(alpha = 0.2f) else AmberWarning.copy(alpha = 0.2f)
+                                    val badgeColor = if (isVerified) GreenSuccess else AmberWarning
                                     val badgeText = if (isVerified) "✓ Verified" else "● Pending"
                                     
                                     Box(
@@ -181,7 +157,12 @@ fun RecordsScreen(viewModel: EntryViewModel = androidx.lifecycle.viewmodel.compo
                                         Text(badgeText, fontSize = 10.sp, color = badgeColor)
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = TextSub, modifier = Modifier.size(16.dp))
+                                    IconButton(
+                                        onClick = { viewModel.deleteEntry(entry.id) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = RedDanger, modifier = Modifier.size(16.dp))
+                                    }
                                 }
                             }
                             
