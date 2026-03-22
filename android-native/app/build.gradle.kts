@@ -13,8 +13,10 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-        val props = com.android.build.gradle.internal.cxx.configure
-            .gradleLocalProperties(rootDir)
+        val props = java.util.Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) load(f.inputStream())
+        }
         buildConfigField("String","SUPABASE_URL",
             "\"${props.getProperty("SUPABASE_URL","")}\"")
         buildConfigField("String","SUPABASE_ANON_KEY",
